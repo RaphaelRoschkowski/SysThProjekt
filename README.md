@@ -1,2 +1,3 @@
 # SysThProjekt
 
+## Grundlegende Struktur
