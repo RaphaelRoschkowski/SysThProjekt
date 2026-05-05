@@ -20,6 +20,10 @@ import config
 from m90e32as import M90E32AS
 from relay_control import RelayBank
 
+# Dead man's switch state
+_last_command_time = time.time()  # Track when last command received
+_dead_mans_active = False          # Flag if watchdog has triggered
+
 
 # ── WiFi ──────────────────────────────────────────────────────────────────────
 
@@ -46,6 +50,8 @@ _relay: RelayBank | None        = None
 
 def _mqtt_callback(topic: bytes, msg: bytes) -> None:
     """Called by umqtt on every incoming message."""
+    global _last_command_time, _dead_mans_active
+    
     if topic != config.MQTT_TOPIC_CMD:
         return
     try:
@@ -56,6 +62,14 @@ def _mqtt_callback(topic: bytes, msg: bytes) -> None:
 
     cmd = payload.get("command", "")
     print(f"[cmd] received: {cmd}")
+    
+    # Dead man's switch: reset timeout on any command received
+    _last_command_time = time.time()
+    if _dead_mans_active:
+        print("[safety] Dead man's switch disengaged – relays restored")
+        _dead_mans_active = False
+        if _relay is not None:
+            _relay.restore()
 
     if cmd == "shutdown" and _relay is not None:
         _relay.shutdown()
@@ -114,18 +128,22 @@ def _init_meter() -> M90E32AS:
 # ── Main loop ─────────────────────────────────────────────────────────────────
 
 def main() -> None:
-    global _mqtt_client, _relay
+    global _mqtt_client, _relay, _last_command_time, _dead_mans_active
 
     wifi_connect()
 
     meter  = _init_meter()
     _relay = RelayBank()          # starts in safe/open state
     _mqtt_client = _mqtt_connect()
+    
+    _last_command_time = time.time()  # Initialize dead man's switch
 
     t_last_meas   = time.ticks_ms()
     t_last_status = time.ticks_ms()
 
     print("[main] entering measurement loop")
+    print(f"[safety] Dead man's switch armed – timeout: {config.DEAD_MANS_SWITCH_TIMEOUT_S}s")
+    
     while True:
         # Non-blocking MQTT receive
         try:
@@ -139,6 +157,16 @@ def main() -> None:
                 print("[mqtt] reconnect failed:", exc)
 
         now = time.ticks_ms()
+        
+        # Dead man's switch: check if command timeout exceeded
+        time_since_command = time.time() - _last_command_time
+        if time_since_command > config.DEAD_MANS_SWITCH_TIMEOUT_S:
+            if not _dead_mans_active:
+                print(f"[SAFETY] Dead man's switch triggered! No command for {time_since_command:.1f}s")
+                print("[SAFETY] EMERGENCY SHUTDOWN – opening relays")
+                _relay.shutdown()
+                _dead_mans_active = True
+                _publish_status()
 
         # Publish measurement
         if time.ticks_diff(now, t_last_meas) >= config.MEASUREMENT_INTERVAL_MS:

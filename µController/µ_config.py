@@ -29,3 +29,6 @@ RELAY_PINS = [25, 26, 27]              # L1, L2, L3
 # ── Measurement loop ──────────────────────────────────────────────────────────
 MEASUREMENT_INTERVAL_MS = 1_000        # publish every 1 s
 STATUS_INTERVAL_MS      = 5_000        # heartbeat every 5 s
+
+# ── Dead man's switch (ESP32 watchdog) ────────────────────────────────────────
+DEAD_MANS_SWITCH_TIMEOUT_S = 60        # If RPi doesn't send command within 60s, open relays
