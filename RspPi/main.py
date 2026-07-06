@@ -156,7 +156,7 @@ def main() -> None:
         except Exception as exc:
             logger.critical("Failed to send emergency shutdown: %s", exc)
         logger.critical("Exiting due to critical ESP connection failure")
-        return
+        #return
 
     # Start safety watchdog thread (monitors ESP heartbeat)
     _emergency_stop_event.clear()
