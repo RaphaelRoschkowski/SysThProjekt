@@ -29,6 +29,7 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 
 U8G2_SSD1327_WS_128X128_F_4W_HW_SPI u8g2(U8G2_R0, SCREEN_CS, SCREEN_DC, SCREEN_RES);
+bool relay_status;
 
 void callback(char* topic, byte* payload, unsigned int length) {
   String msg;
@@ -38,9 +39,12 @@ void callback(char* topic, byte* payload, unsigned int length) {
   if (msg == "ON") {
   //  digitalWrite(RELAY_PIN, LOW);
     client.publish(topic_status, "relay_on");
+    updateDisplay();
+
   } else if (msg == "OFF") {
   //  digitalWrite(RELAY_PIN, HIGH);
     client.publish(topic_status, "relay_off");
+    updateDisplay();
   }
 }
 
@@ -58,6 +62,14 @@ void reconnect() {
   }
 }
 
+void updateDisplay() {
+  u8g2.clearBuffer();
+  u8g2.setFont(u8g2_font_7x14B_tr);
+  u8g2.drawStr(20,20, relay_status ? "Relay: Active" : "Relay: Inactive");
+  u8g2.drawStr(20,40, client.connected() ? "RPi: Connected" : "RPi: Not Connected");
+  u8g2.sendBuffer();
+}
+
 void setup() {
   Serial.begin(115200);
   pinMode(RELAY_PIN, OUTPUT);
@@ -72,11 +84,9 @@ void setup() {
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
   // DISPLAY
+  relay_status = true;
   u8g2.begin();
-  u8g2.clearBuffer();
-  u8g2.setFont(u8g2_font_7x14B_tr);
-  u8g2.drawStr(10,20, "SPI_OK");
-  u8g2.sendBuffer();
+  updateDisplay();
 }
 
 void loop() {
