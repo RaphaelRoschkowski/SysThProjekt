@@ -123,6 +123,6 @@ class EspInterface:
             self._esp_online = data.get("online", True)
             logger.debug("ESP32 connection status: %s", data)
         else:
-            self._relay_status = data.get("relay", True)
+            self._relay_status = data.get("ON", True)
             logger.debug("Relais status: %s", data)
     
