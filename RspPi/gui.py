@@ -116,7 +116,7 @@ def build_layout() -> list:
 
     # ── Control panel ────────────────────────────────────────────────────────
     relay_state_txt = sg.Text(
-        "Relais: UNBEKANNT", key="-RELAY_STATE-",
+        "Relais: UNBEKANNT", key="-RELAY_STATUS-",
         font=FONT_MED, text_color=TEXT_DIM, background_color=PANEL_BG,
         expand_x=True,
     )
@@ -243,6 +243,7 @@ class Dashboard:
         self,
         measurement: dict,
         esp_online: bool,
+        relay_status: Optional[bool],
         azure_online: bool,
         last_seen: Optional[datetime],
     ) -> None:
@@ -265,13 +266,13 @@ class Dashboard:
             _fmt(w, f"-power_{ph}-",   measurement.get(f"power_{ph}"),   ".1f")
 
         # Relay
-        relay_on: Optional[bool] = measurement.get("relay_state")
+        relay_on: Optional[bool] = relay_status
         if relay_on is True:
-            w["-RELAY_STATE-"].update("Relais: GESCHLOSSEN  ✔", text_color=GREEN)
+            w["-RELAY_STATUS-"].update("Relais: GESCHLOSSEN  ✔", text_color=GREEN)
         elif relay_on is False:
-            w["-RELAY_STATE-"].update("Relais: OFFEN  (Anlage getrennt)", text_color=RED)
+            w["-RELAY_STATUS-"].update("Relais: OFFEN  (Anlage getrennt)", text_color=RED)
         else:
-            w["-RELAY_STATE-"].update("Relais: UNBEKANNT", text_color=TEXT_DIM)
+            w["-RELAY_STATUS-"].update("Relais: UNBEKANNT", text_color=TEXT_DIM)
 
         # Status LEDs
         w["-LED_ESP-"].update(text_color=GREEN if esp_online else RED)

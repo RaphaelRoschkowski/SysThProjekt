@@ -5,13 +5,14 @@ AZURE_CONNECTION_STRING = "HostName=<YOUR_HUB>.azure-devices.net;DeviceId=<DEVIC
 AZURE_TELEMETRY_INTERVAL_S = 5          # seconds between cloud uploads
 
 # ── Local MQTT broker (mosquitto on RPi) ──────────────────────────────────────
-MQTT_BROKER_HOST   = "localhost"
+MQTT_BROKER_HOST   = "192.168.4.2"
 MQTT_BROKER_PORT   = 1883
 MQTT_KEEPALIVE_S   = 60
 
-MQTT_TOPIC_MEAS    = "solar/measurements"   # ESP32 → RPi
-MQTT_TOPIC_CMD     = "solar/commands"       # RPi  → ESP32
-MQTT_TOPIC_STATUS  = "solar/status"         # ESP32 heartbeat
+MQTT_TOPIC_MEAS    = "wallbox/data"
+MQTT_TOPIC_CMD     = "wallbox/commands"  
+MQTT_TOPIC_CONNECTION  = "wallbox/connection"
+MQTT_TOPIC_RELAY  = "wallbox/relay/status"
 
 # ── GUI refresh ───────────────────────────────────────────────────────────────
 GUI_REFRESH_MS = 500                    # poll interval for GUI event loop
@@ -19,9 +20,9 @@ GUI_REFRESH_MS = 500                    # poll interval for GUI event loop
 ESP_CONNECTION_RETRIES = 3              # number of connection attempts
 ESP_CONNECTION_RETRY_DELAY_S = 2       # delay between retries in seconds
 ESP_CONNECTION_TIMEOUT_S = 10           # timeout for each connection attempt
-ESP_HEARTBEAT_TIMEOUT_S = 30            # max time without ESP heartbeat before emergency shutdown
+ESP_HEARTBEAT_TIMEOUT_S = 40            # max time without ESP heartbeat before emergency shutdown
 
-AZURE_CONNECTION_RETRIES = 2            # Azure is non-critical
+AZURE_CONNECTION_RETRIES = 1            # Azure is non-critical
 AZURE_CONNECTION_RETRY_DELAY_S = 3
 AZURE_CONNECTION_TIMEOUT_S = 15
 

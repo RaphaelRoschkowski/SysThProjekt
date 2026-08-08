@@ -203,6 +203,7 @@ def main() -> None:
             dashboard.update(
                 measurement  = meas,
                 esp_online   = esp.esp_online,
+                relay_status = esp.relay_status,
                 azure_online = azure.connected if azure_ok else False,
                 last_seen    = esp.last_seen,
             )

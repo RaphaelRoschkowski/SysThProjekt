@@ -23,14 +23,8 @@ def get_latest_measurement() -> dict:
 
 
 class EspInterface:
-    """Manages the local MQTT connection to the ESP32.
+    #Manages the local MQTT connection to the ESP32.
 
-    Topics
-    ------
-    solar/measurements  – ESP32 publishes JSON measurement frames
-    solar/status        – ESP32 publishes heartbeat / relay state
-    solar/commands      – RPi publishes JSON command frames → ESP32
-    """
 
     def __init__(self, on_measurement: Optional[Callable[[dict], None]] = None):
         """
@@ -43,6 +37,7 @@ class EspInterface:
         self._on_measurement = on_measurement
         self._esp_online = False
         self._last_seen: Optional[datetime] = None
+        self._relay_status = False
 
         self._client = mqtt.Client(client_id="rpi_main", clean_session=True)
         self._client.on_connect    = self._on_connect
@@ -97,7 +92,8 @@ class EspInterface:
     def _on_connect(self, client, userdata, flags, rc) -> None:
         if rc == 0:
             client.subscribe(config.MQTT_TOPIC_MEAS,   qos=0)
-            client.subscribe(config.MQTT_TOPIC_STATUS, qos=0)
+            client.subscribe(config.MQTT_TOPIC_CONNECTION, qos=0)
+            client.subscribe(config.MQTT_TOPIC_RELAY, qos=0)
             logger.info("MQTT: broker connected, subscriptions active")
         else:
             logger.error("MQTT: connection refused – rc=%d", rc)
@@ -123,6 +119,10 @@ class EspInterface:
                 self._on_measurement(data)
             logger.debug("Measurement: %.1f W total", data.get("power_total", 0))
 
-        elif msg.topic == config.MQTT_TOPIC_STATUS:
+        elif msg.topic == config.MQTT_TOPIC_CONNECTION:
             self._esp_online = data.get("online", True)
-            logger.debug("ESP32 status: %s", data)
+            logger.debug("ESP32 connection status: %s", data)
+        else:
+            self._relay_status = data.get("relay", True)
+            logger.debug("Relais status: %s", data)
+    
