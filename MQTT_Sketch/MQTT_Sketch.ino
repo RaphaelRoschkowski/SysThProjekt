@@ -2,6 +2,7 @@
 #include <PubSubClient.h>
 #include <SPI.h>
 #include <U8g2lib.h>
+#include <ArduinoJson.h> 
 
 // AP
 const char* ap_ssid = "ESP32_IOT";
@@ -15,6 +16,7 @@ const char* mqtt_pass = "blueberry";
 const char* topic_cmd = "wallbox/relay/cmd";
 const char* topic_status = "wallbox/relay/status";
 const char* topic_data = "wallbox/data";
+const char* topic_connection = "wallbox/connection";
 
 // PINS
 #define RELAY_PIN 12
@@ -34,26 +36,32 @@ bool relay_status;
 U8G2_SSD1327_WS_128X128_F_4W_HW_SPI u8g2(U8G2_R0, SCREEN_CS, SCREEN_DC, SCREEN_RES);
 SPISettings measSPISettings(1000000, MSBFIRST, SPI_MODE0);
 
-#define DATA_INTERVAL 100
+#define DATA_INTERVAL 1000
 unsigned long lastDataMillis = 0;
 
 void callback(char* topic, byte* payload, unsigned int length) {
+  StaticJsonDocument<128> doc;
+  DeserializationError error = deserializeJson(doc, payload, length);
+  const char* cmd = doc["command"];
+
+  if (error){
+    Serial.print("JSON parse failed: ");
+    Serial.println(error.c_str());
+  }
+
   String msg;
   for (unsigned int i = 0; i < length; i++) msg += (char)payload[i];
   Serial.println("Received on " + String(topic) + ": " + msg);
-
-  if (msg == "ON") {
-  //  digitalWrite(RELAY_PIN, LOW);
-    relay_status = true;
-    client.publish(topic_status, "relay_on");
-    updateDisplay();
-
-  } else if (msg == "OFF") {
-  //  digitalWrite(RELAY_PIN, HIGH);
+  if (String(cmd) == "shutdown" || msg == "OFF") {
+    //  digitalWrite(RELAY_PIN, HIGH);
     relay_status = false;
-    client.publish(topic_status, "relay_off");
-    updateDisplay();
+    Serial.println("Shutting Down");
+  } else if (String(cmd) == "restore" || msg == "ON") {
+    //  digitalWrite(RELAY_PIN, LOW);
+    relay_status = true;
   }
+  publishRelay();
+  updateDisplay();
 }
 
 void reconnect() {
@@ -91,6 +99,11 @@ void publishMeasurement() {
   snprintf(payload, sizeof(payload), "{\"val\":%.3f,\"ts\":%lu}", val, millis());
   client.publish(topic_data, payload);
 }
+void publishRelay() {
+  char payload[64];
+  snprintf(payload, sizeof(payload), "{\"relay_status\":%d,\"ts\":%lu}", relay_status, millis());
+  client.publish(topic_status, payload);
+}
 void setup() {
   Serial.begin(115200);
   pinMode(RELAY_PIN, OUTPUT);
@@ -116,5 +129,7 @@ void loop() {
   if (millis() - lastDataMillis >= DATA_INTERVAL) {
     lastDataMillis = millis();
     publishMeasurement();
+    publishRelay();
+    updateDisplay();
   }
 }
