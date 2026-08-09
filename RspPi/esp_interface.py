@@ -37,9 +37,10 @@ class EspInterface:
         self._on_measurement = on_measurement
         self._esp_online = False
         self._last_seen: Optional[datetime] = None
-        self._relay_status = False
+        self._relay_status: Optional[bool] = None
 
         self._client = mqtt.Client(client_id="rpi_main", clean_session=True)
+        self._client.username_pw_set(config.MQTT_USERNAME, config.MQTT_PASSWORD)
         self._client.on_connect    = self._on_connect
         self._client.on_disconnect = self._on_disconnect
         self._client.on_message    = self._on_message
@@ -108,7 +109,7 @@ class EspInterface:
         except (json.JSONDecodeError, UnicodeDecodeError):
             logger.warning("MQTT: malformed message on %s", msg.topic)
             return
-
+        
         self._last_seen = datetime.now(timezone.utc)
 
         if msg.topic == config.MQTT_TOPIC_MEAS:
@@ -122,7 +123,13 @@ class EspInterface:
         elif msg.topic == config.MQTT_TOPIC_CONNECTION:
             self._esp_online = data.get("online", True)
             logger.debug("ESP32 connection status: %s", data)
-        else:
-            self._relay_status = data.get("ON", True)
-            logger.debug("Relais status: %s", data)
+        elif msg.topic == config.MQTT_TOPIC_RELAY:
+            #if data.get("relay_status") == "true":
+            #    self._relay_status = True
+            #elif data.get("relay_status") == "false":
+            #    self._relay_status = False
+            #else:
+            #    self._relay_status = None
+            self._relay_status = bool(int(data.get("relay_status", None)))
+            logger.info("Relais status: %s", data)
     

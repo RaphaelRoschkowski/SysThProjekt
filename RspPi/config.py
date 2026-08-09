@@ -9,8 +9,11 @@ MQTT_BROKER_HOST   = "192.168.4.2"
 MQTT_BROKER_PORT   = 1883
 MQTT_KEEPALIVE_S   = 60
 
+MQTT_PASSWORD = "blueberry"
+MQTT_USERNAME = "blueberry"
+
 MQTT_TOPIC_MEAS    = "wallbox/data"
-MQTT_TOPIC_CMD     = "wallbox/commands"  
+MQTT_TOPIC_CMD     = "wallbox/relay/cmd"  
 MQTT_TOPIC_CONNECTION  = "wallbox/connection"
 MQTT_TOPIC_RELAY  = "wallbox/relay/status"
 

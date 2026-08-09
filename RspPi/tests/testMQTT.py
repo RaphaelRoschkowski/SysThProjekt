@@ -8,7 +8,7 @@ def on_message(client,userdata,msg):
         print(f"val={data['val']} ts={data['ts']}")
     else:
         print(f"{msg.topic}: {msg.payload.decode()}")
-def on_connect(client, userdata, flags, reason_code, properties):
+def on_connect(client, userdata, flags, reason_code, properties=None):
     print("Connected; RC:", reason_code)
     client.subscribe("wallbox/relay/status")
     client.subscribe("wallbox/data")
