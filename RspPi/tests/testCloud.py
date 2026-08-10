@@ -1,7 +1,7 @@
 from azure.iot.device import IoTHubDeviceClient, Message
 import json, time
 
-CONNECTION_STRING = "HostName=SystemtechnikHub.azure-devices.net;DeviceId=DeskPC;SharedAccessKey=bNlfz9nqP4gA62mvGp/H4nvFoDN7m7LjNl+Md9nqfFM="
+CONNECTION_STRING = ""
 client = IoTHubDeviceClient.create_from_connection_string(CONNECTION_STRING)
 client.connect()
 
